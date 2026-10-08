@@ -17,7 +17,7 @@ function Icon({ name }) {
   return <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">{paths[name]}</svg>;
 }
 
-export default function Header({ count, query, setQuery, onCart, onCategory }) {
+export default function Header({ count, wishCount, query, setQuery, onCart, onWishlist, onCategory }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   useEffect(() => {
@@ -46,8 +46,7 @@ export default function Header({ count, query, setQuery, onCart, onCategory }) {
         <Icon name="search" /><input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search clothing, styles and more" aria-label="Search products" />
       </form>
       <div className="header-actions">
-        <button className="icon-button desktop-action" aria-label="Account (coming soon)" title="Account"><Icon name="user" /></button>
-        <button className="icon-button desktop-action" aria-label="Wishlist (coming soon)" title="Wishlist"><Icon name="heart" /></button>
+        <button className="icon-button wishlist-action" aria-label={`Show saved pieces, ${wishCount} items`} title="Saved pieces" onClick={onWishlist}><Icon name="heart" />{wishCount > 0 && <span className="cart-count">{wishCount}</span>}</button>
         <button className="icon-button mobile-search-button" aria-label={searchOpen ? "Close search" : "Open search"} aria-expanded={searchOpen} onClick={() => setSearchOpen(!searchOpen)}><Icon name="search" /></button>
         <button className="cart-icon-button" onClick={onCart} aria-label={`Open cart, ${count} items`}><Icon name="bag" /><span className="cart-count">{count}</span><span className="cart-word">Cart</span></button>
       </div>

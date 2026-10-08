@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { admin } from "@/lib/supabase";
 import { notifyOrder } from "@/lib/notify";
+import { DEFAULT_SIZES } from "@/lib/product-options";
 const FREE = 3000;
 export async function POST(req) {
   const b = await req.json().catch(() => ({}));
@@ -15,13 +16,20 @@ export async function POST(req) {
     return NextResponse.json({ error: "Enter the transaction ID (TrxID) from your payment message." }, { status: 400 });
   const db = admin();
   const ids = [...new Set(b.items.map((i) => Number(i.id)))];
-  const { data: prods } = await db.from("products").select("id,name,price,stock").in("id", ids).eq("active", true);
+  let { data: prods, error: productError } = await db.from("products").select("id,name,price,stock,available_sizes").in("id", ids).eq("active", true);
+  if (productError?.message?.includes("available_sizes")) {
+    ({ data: prods, error: productError } = await db.from("products").select("id,name,price,stock").in("id", ids).eq("active", true));
+  }
+  if (productError) return NextResponse.json({ error: "Could not verify product sizes. Check the product schema and try again." }, { status: 500 });
   const map = Object.fromEntries((prods || []).map((p) => [p.id, p]));
   const lines = [];
   for (const i of b.items) {
     const p = map[Number(i.id)], q = Math.floor(Number(i.qty));
     if (!p || !(q >= 1 && q <= 20)) return NextResponse.json({ error: "An item is no longer available." }, { status: 400 });
-    lines.push({ id: p.id, name: p.name, size: String(i.size || "M").slice(0, 4), qty: q, price: p.price });
+    const size = String(i.size || (p.available_sizes || DEFAULT_SIZES)[0]).trim();
+    const availableSizes = Array.isArray(p.available_sizes) && p.available_sizes.length ? p.available_sizes : DEFAULT_SIZES;
+    if (!availableSizes.includes(size)) return NextResponse.json({ error: `${size} is not an available size for ${p.name}.` }, { status: 400 });
+    lines.push({ id: p.id, name: p.name, size, qty: q, price: p.price });
   }
   const need = (id) => lines.filter((l) => l.id === id).reduce((a, l) => a + l.qty, 0);
   for (const p of prods) if (need(p.id) > p.stock) return NextResponse.json({ error: `Only ${p.stock} left of ${p.name}.` }, { status: 409 });

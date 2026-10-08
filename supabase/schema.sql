@@ -3,8 +3,12 @@ create table if not exists products(
  name text not null, category text not null default 'Men',
  price int not null check(price>=0), description text default '',
  image_url text default '', color text default '#2f4a7a',
+ compare_at_price int check(compare_at_price is null or compare_at_price>=0),
+ available_sizes text[] not null default array['S','M','L','XL','XXL','XXXL']::text[],
  stock int not null default 0 check(stock>=0), active boolean default true,
  created_at timestamptz default now());
+alter table products add column if not exists compare_at_price int check(compare_at_price is null or compare_at_price>=0);
+alter table products add column if not exists available_sizes text[] not null default array['S','M','L','XL','XXL','XXXL']::text[];
 create table if not exists orders(
  id bigint generated always as identity primary key,
  order_no text unique not null, name text, phone text, address text, area text,

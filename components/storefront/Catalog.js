@@ -2,10 +2,11 @@
 
 import Image from "next/image";
 import { useRef, useState } from "react";
+import { discountPercent, productSizes } from "@/lib/product-options";
 
 const money = (value) => `৳${Number(value || 0).toLocaleString("en-US")}`;
 const fallbackImages = {
-  Women: "https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=900&q=80",
+  Women: "https://images.unsplash.com/photo-1702974981810-e5b4e1875424?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
   Men: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=900&q=80",
   Kids: "https://images.unsplash.com/photo-1519238263530-99bdd11df2ea?auto=format&fit=crop&w=900&q=80",
   "New Arrivals": "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=900&q=80",
@@ -28,8 +29,8 @@ export function ProductCard({ product, onDetails, onAdd, onSize, size, wished, o
       {badge && <span className={`product-badge ${badgeClass}`}>{badge}</span>}
       <button className={`wish-button ${isWished ? "is-wished" : ""}`} aria-label={isWished ? `Remove ${product.name} from wishlist` : `Add ${product.name} to wishlist`} aria-pressed={isWished} onClick={(event) => { event.stopPropagation(); onWish(product.id); }}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 8.8c0 5.1-8.8 10-8.8 10s-8.8-4.9-8.8-10a4.7 4.7 0 0 1 8.8-2.2 4.7 4.7 0 0 1 8.8 2.2Z" /></svg></button>
     </div>
-    <div className="product-info"><span className="product-category">{product.category}</span><button className="product-name" onClick={() => onDetails(product)}>{product.name}</button><div className="product-price">{money(product.price)}</div>
-      <div className="product-actions"><div className="size-picker" aria-label={`Choose size for ${product.name}`}>{["S", "M", "L", "XL"].map((option) => <button key={option} aria-pressed={selectedSize === option} onClick={() => onSize(product.id, option)}>{option}</button>)}</div><button className="quick-add" disabled={soldOut} onClick={() => onAdd(product)} aria-label={soldOut ? `${product.name} sold out` : `Add ${product.name} size ${selectedSize} to cart`}>Add</button></div>
+    <div className="product-info"><span className="product-category">{product.category}</span><button className="product-name" onClick={() => onDetails(product)}>{product.name}</button><div className="product-price"><strong>{money(product.price)}</strong>{product.compare_at_price > product.price && <><del>{money(product.compare_at_price)}</del><span className="discount-label">{discountPercent(product)}% off</span></>}</div>
+      <div className="product-actions"><div className="size-picker"><select value={selectedSize} onChange={(event) => onSize(product.id, event.target.value)} aria-label={`Choose size for ${product.name}`}>{productSizes(product).map((option) => <option key={option} value={option}>{option}</option>)}</select></div><button className="quick-add" disabled={soldOut} onClick={() => onAdd(product)} aria-label={soldOut ? `${product.name} sold out` : `Add ${product.name} size ${selectedSize} to cart`}>Add</button></div>
     </div>
   </article>;
 }
@@ -39,11 +40,11 @@ export function ProductCarousel({ title, id, products, ...cardProps }) {
   return <section className="product-section page-wrap" id={id} data-reveal><div className="section-heading"><div><span className="eyebrow">Nam Sora selection</span><h2>{title}</h2></div><div className="section-actions"><a href="#shop" className="view-all">View all <span aria-hidden="true">↗</span></a><button aria-label={`Scroll ${title} left`} onClick={() => rail.current?.scrollBy({ left: -360, behavior: "smooth" })}>←</button><button aria-label={`Scroll ${title} right`} onClick={() => rail.current?.scrollBy({ left: 360, behavior: "smooth" })}>→</button></div></div>{products.length ? <div className="product-rail" ref={rail}>{products.map((product) => <ProductCard key={product.id} product={product} {...cardProps} />)}</div> : <p className="catalog-empty">New pieces are on their way.</p>}</section>;
 }
 
-export function FilterBar({ category, setCategory, sort, setSort, sizeFilter, setSizeFilter, maxPrice, setMaxPrice, priceLimit = 5000, count }) {
+export function FilterBar({ category, setCategory, sort, setSort, sizeFilter, setSizeFilter, sizeOptions = [], maxPrice, setMaxPrice, priceLimit = 5000, count }) {
   const [filtersOpen, setFiltersOpen] = useState(false);
   return <div className="filter-area"><div className="filter-summary"><span>{count} pieces</span><button className="filter-toggle" onClick={() => setFiltersOpen(!filtersOpen)} aria-expanded={filtersOpen}>Filters <span aria-hidden="true">⌄</span></button><label className="sort-select">Sort by <select value={sort} onChange={(event) => setSort(event.target.value)} aria-label="Sort products"><option value="featured">Featured</option><option value="low">Price: low to high</option><option value="high">Price: high to low</option></select></label></div><div className={`filter-panel ${filtersOpen ? "filters-open" : ""}`}>
     <label>Category<select value={category} onChange={(event) => setCategory(event.target.value)}><option value="all">All categories</option><option value="Women">Women</option><option value="Men">Men</option><option value="Kids">Kids</option></select></label>
-    <label>Size<select value={sizeFilter} onChange={(event) => setSizeFilter(event.target.value)}><option value="all">All sizes</option>{["S", "M", "L", "XL"].map((size) => <option key={size}>{size}</option>)}</select></label>
+    <label>Size<select value={sizeFilter} onChange={(event) => setSizeFilter(event.target.value)}><option value="all">All sizes</option>{sizeOptions.map((size) => <option key={size} value={size}>{size}</option>)}</select></label>
     <label className="price-range">Price up to <span>{money(maxPrice)}</span><input type="range" min="500" max={priceLimit} step="100" value={maxPrice} onChange={(event) => setMaxPrice(Number(event.target.value))} aria-label="Maximum price" /></label>
   </div></div>;
 }

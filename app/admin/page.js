@@ -1,6 +1,6 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
-const blank = { name: "", category: "Men", price: 0, description: "", image_url: "", color: "#2f4a7a", stock: 0, active: true };
+const blank = { name: "", category: "Men", price: 0, compare_at_price: "", available_sizes: "S, M, L, XL, XXL, XXXL", description: "", image_url: "", color: "#2f4a7a", stock: 0, active: true };
 const ST = ["new", "confirmed", "shipped", "delivered", "cancelled"];
 export default function Admin() {
   const [auth, setAuth] = useState(null), [pw, setPw] = useState(""), [msg, setMsg] = useState(""), [tab, setTab] = useState("orders");
@@ -58,12 +58,15 @@ export default function Admin() {
       <button className="cta" onClick={() => setEd({ ...blank })}>Add product</button>
       {ed && <div className="card pad" style={{ margin: "16px 0" }}><input placeholder="Name" value={ed.name} onChange={set("name")} />
         <select value={ed.category} onChange={set("category")}><option>Men</option><option>Women</option><option>Kids</option></select>
-        <input type="number" placeholder="Price (৳)" value={ed.price} onChange={set("price")} /><input type="number" placeholder="Stock" value={ed.stock} onChange={set("stock")} />
+        <label className="adm-field">Sale price (৳)<input type="number" min="0" step="1" placeholder="Current price" value={ed.price} onChange={set("price")} /></label>
+        <label className="adm-field">Original price (৳), optional<input type="number" min="0" step="1" placeholder="Shown crossed out when higher" value={ed.compare_at_price ?? ""} onChange={set("compare_at_price")} /></label>
+        <label className="adm-field">Stock quantity<input type="number" min="0" step="1" placeholder="Total stock across sizes" value={ed.stock} onChange={set("stock")} /></label>
+        <label className="adm-field">Available sizes (comma separated)<input placeholder="S, M, L, XL, XXL, XXXL or 36, 38, 40" value={Array.isArray(ed.available_sizes) ? ed.available_sizes.join(", ") : ed.available_sizes} onChange={set("available_sizes")} /></label>
         <label>Photo (JPG, PNG, WebP, max 3 MB) <input type="file" accept="image/jpeg,image/png,image/webp" onChange={upload} /></label>{ed.image_url && <img src={ed.image_url} alt="Preview" width="120" height="120" style={{ objectFit: "cover", borderRadius: 10 }} />}
         <input placeholder="Image URL (optional)" value={ed.image_url} onChange={set("image_url")} /><label>Placeholder color <input type="color" value={ed.color} onChange={set("color")} /></label>
         <textarea rows="2" placeholder="Description" value={ed.description} onChange={set("description")} /><label><input type="checkbox" checked={ed.active} onChange={set("active")} style={{ width: "auto" }} /> Show in store</label>
         <p className="err">{msg}</p><button className="cta" onClick={save}>Save product</button> <button className="add" onClick={() => setEd(null)}>Cancel</button></div>}
-      <div className="grid" style={{ marginTop: 16 }}>{prods.map((p) => <div className="card pad" key={p.id}><b>{p.name}</b><small>{p.category} · ৳{p.price} · stock {p.stock}{p.active ? "" : " · hidden"}</small>
-        <div className="row"><button className="add" onClick={() => setEd(p)}>Edit</button><button className="add" onClick={() => del(p.id)}>Delete</button></div></div>)}</div></>}
+      <div className="grid" style={{ marginTop: 16 }}>{prods.map((p) => <div className="card pad" key={p.id}><b>{p.name}</b><small>{p.category} · sale ৳{p.price}{p.compare_at_price > p.price ? ` · was ৳${p.compare_at_price}` : ""} · stock {p.stock}{p.active ? "" : " · hidden"}</small><small>Sizes: {(p.available_sizes || []).join(", ") || "S, M, L, XL, XXL, XXXL"}</small>
+        <div className="row"><button className="add" onClick={() => setEd({ ...p, available_sizes: (p.available_sizes || []).join(", ") })}>Edit</button><button className="add" onClick={() => del(p.id)}>Delete</button></div></div>)}</div></>}
   </main>;
 }
